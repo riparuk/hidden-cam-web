@@ -2,6 +2,10 @@
 
 A minimal, reactive tool for discreet evidence collection — designed to help individuals silently document unethical or criminal behavior in public or institutional settings.
 
+<a href="iphone-demo.png">
+  <img src="iphone-demo.png" alt="Watch the demo" width="300" />
+</a>
+
 ### 🕵️ How it works
 - ✅ **Grant camera access**
 - ▶️ **Play YouTube video** → camera starts recording in the background
