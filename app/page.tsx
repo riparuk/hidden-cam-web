@@ -1,103 +1,157 @@
-import Image from "next/image";
+"use client"
+
+import { useEffect, useRef, useState } from "react";
+import AppBar from "./components/appBar";
+import DopamineVideo from "./components/dopamineVideo";
+import { saveRecording } from "./storageUtils";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const startRecording = () => {
+    if (!streamRef.current) return;
+    recordedChunksRef.current = [];
+    const recorder = new MediaRecorder(streamRef.current);
+    mediaRecorderRef.current = recorder;
+  
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        recordedChunksRef.current.push(e.data);
+      }
+    };
+  
+    recorder.onstop = () => {
+      const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+      const url = URL.createObjectURL(blob);
+      saveRecording(blob);
+    };
+  
+    recorder.start();
+  };
+  
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+  };
+  // Camera states
+  const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("user");
+  const [isCameraOn, setIsCameraOn] = useState(false);
+  // Camera device selection
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  async function startCamera(
+    facingMode: "user" | "environment" = "user",
+    deviceId?: string
+  ) {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      console.warn("Browser not ready or not support getUserMedia.");
+      return;
+    }
+  
+    try {
+      const constraints: MediaStreamConstraints = {
+        video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode },
+        audio: true,
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setIsCameraOn(true);
+    } catch (err) {
+      console.error("Error accessing webcam:", err);
+      setIsCameraOn(false);
+    }
+  }
+
+  function stopCamera() {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      setIsCameraOn(false);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  }
+
+  useEffect(() => {
+    // Load available video devices
+    async function loadDevices() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videos = devices.filter((d) => d.kind === "videoinput");
+        setVideoDevices(videos);
+      } catch (e) {
+        setVideoDevices([]);
+      }
+    }
+    if (hasMounted) {
+      loadDevices();
+      startCamera(cameraFacingMode);
+    }
+    return () => stopCamera();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMounted]);
+
+  const toggleCamera = () => {
+    if (isCameraOn) {
+      stopCamera();
+    } else {
+      startCamera(cameraFacingMode, selectedDeviceId ?? undefined);
+    }
+    // setIsCameraOn((prev) => !prev);
+  };
+
+  const switchCamera = () => {
+    const newMode = cameraFacingMode === "user" ? "environment" : "user";
+    stopCamera();
+    startCamera(newMode, selectedDeviceId ?? undefined);
+    setCameraFacingMode(newMode);
+  };
+
+  // Handler for dropdown camera device selection
+  const handleDeviceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const deviceId = e.target.value;
+    setSelectedDeviceId(deviceId);
+    stopCamera();
+    startCamera(cameraFacingMode, deviceId || undefined);
+  };
+
+  if (!hasMounted) return null;
+
+  return (
+    <div>
+      <AppBar videoRef={videoRef} isCameraOn={isCameraOn} toggleCamera={toggleCamera} switchCamera={switchCamera} />
+      <DopamineVideo startRecording={startRecording} stopRecording={stopRecording} isCameraOn={isCameraOn} />
+      <div className="flex flex-col items-center gap-6 p-6">
+        {/* Dropdown for camera selection */}
+        {videoDevices.length >= 0 && (
+          <select
+            className="border px-2 py-1 rounded"
+            value={selectedDeviceId ?? ""}
+            onChange={handleDeviceChange}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            <option value="">Default Camera</option>
+            {videoDevices.map((device) => (
+              <option key={device.deviceId} value={device.deviceId}>
+                {device.label || `Camera ${device.deviceId.slice(-4)}`}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
     </div>
   );
 }
