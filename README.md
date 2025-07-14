@@ -1,6 +1,6 @@
 # Hidden Cam Web
 
-A minimal, reactive tool for discreet evidence collection — designed to help individuals silently document unethical or criminal behavior in public or institutional settings.
+Record and save video evidence secretly through your browser. — designed to debunk scammers. 100% Stored Locally in your browser.
 
 <a href="iphone-demo.png">
   <img src="iphone-demo.png" alt="Watch the demo" width="300" />
