@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import AppBar from "./components/appBar";
-import DopamineVideo from "./components/dopamineVideo";
 import { saveRecording } from "./storageUtils";
+import DopamineVideo from "@/app/components/dopamineVideo";
 
 export default function Home() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -136,6 +136,7 @@ export default function Home() {
       <AppBar videoRef={videoRef} isCameraOn={isCameraOn} toggleCamera={toggleCamera} switchCamera={switchCamera} />
       <DopamineVideo startRecording={startRecording} stopRecording={stopRecording} isCameraOn={isCameraOn} />
       <div className="flex flex-col items-center gap-6 p-6">
+        <p>Try other browser if something not working.</p>
         {/* Dropdown for camera selection */}
         {videoDevices.length >= 0 && (
           <select

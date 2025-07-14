@@ -11,10 +11,6 @@ export async function openDB(): Promise<IDBDatabase> {
         if (!db.objectStoreNames.contains("recordings")) {
           db.createObjectStore("recordings", { keyPath: "id", autoIncrement: true });
         }
-  
-        if (!db.objectStoreNames.contains("dopamine")) {
-          db.createObjectStore("dopamine", { keyPath: "id" });
-        }
       };
   
       request.onsuccess = () => resolve(request.result);
@@ -68,33 +64,3 @@ export async function clearRecordings() {
         request.onerror = () => reject(request.error);
     });
 }
-
-export async function downloadAndStoreVideo() {
-    const res = await fetch("/dopamine.mp4"); // atau remote URL
-    const blob = await res.blob();
-  
-    const db = await openDB();
-    const tx = db.transaction("dopamine", "readwrite");
-    const store = tx.objectStore("dopamine");
-    store.put({ id: "dopamine", blob });
-}
-
-export async function loadVideoFromIndexedDB() {
-    const db = await openDB();
-    const tx = db.transaction("dopamine", "readonly");
-    const store = tx.objectStore("dopamine");
-    const request = store.get("dopamine");
-    return new Promise<string | null>((resolve, reject) => {
-        request.onsuccess = () => {
-            const record = request.result;
-            if (record?.blob) {
-                resolve(URL.createObjectURL(record.blob));
-            } else {
-                resolve(null);
-            }
-        };
-        request.onerror = () => reject(request.error);
-    });
-}
-
-
