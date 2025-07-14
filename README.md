@@ -6,6 +6,14 @@ A minimal, reactive tool for discreet evidence collection — designed to help i
   <img src="iphone-demo.png" alt="Watch the demo" width="300" />
 </a>
 
+### Features
+- Change Title App
+- Turn on/off small preview
+- Recording Saved in local browser
+- Switch camera
+- No recording send to server
+- No data collected (it's open source, you can check the code)
+
 ### 🕵️ How it works
 - ✅ **Grant camera access**
 - ▶️ **Play YouTube video** → camera starts recording in the background
@@ -17,7 +25,7 @@ A minimal, reactive tool for discreet evidence collection — designed to help i
 - WebM format not natively supported — convert to .mp4 with external tools
 - Saving doesn't work on Brave browser due to storage restrictions
 
-### 💻 Desktop Notes
+### 💻 Desktop Notes (tested mac)
 - Best performance on Chromium-based browsers (e.g., Edge, Chrome)
 - Safari does not support WebM playback
 
