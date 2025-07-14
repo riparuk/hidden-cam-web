@@ -39,7 +39,7 @@ export default function AppBar({ videoRef, isCameraOn, toggleCamera, switchCamer
 
   return (
     <>
-    <header className="w-full border-b px-4 py-2 flex items-center justify-between">
+    <header className="w-full border-b px-6 py-4 flex items-center justify-between">
       <Link href="/" className="text-lg font-semibold">
       <div className="flex items-center gap-2">
         <video ref={videoRef} autoPlay playsInline muted preload="auto" className={cn("w-5 h-5 rounded-sm bg-black object-cover", isSmallPreview? "hidden" : "")} />
@@ -68,7 +68,7 @@ export default function AppBar({ videoRef, isCameraOn, toggleCamera, switchCamer
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel onClick={() => router.push("/save")}>
+            <DropdownMenuLabel onClick={() => router.push("/saves")}>
                 <div className="flex items-center gap-2">
                     <Save className="h-4 w-4" />
                     Saves
